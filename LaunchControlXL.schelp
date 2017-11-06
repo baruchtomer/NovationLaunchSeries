@@ -1,0 +1,176 @@
+TITLE:: LaunchControlXL
+summary:: Class for Novation LaunchControlXL MIDI controller
+categories:: MIDI
+related:: Classes/LaunchKeyMapper, Classes/LKDrumpad, Classes/LKKnob, Classes/LKButton
+
+DESCRIPTION::
+
+LaunchControlXL - a class for easy usage of Novation LaunchControlXL controller.
+
+Features:
+  Set functions for each element of the Launchcontrol
+  Control pad colors
+  Pad states - Momentary / Toggle / TogHold (toggle but with option to hold the pad)
+  Use pads as menues - select one of them.
+  Store different scenes and switch between scenes
+
+Subclasses -
+  LKDrumpad - handles the LED pads including different behaviour states.
+  LKKnob - handles the knobs and faders
+  LKButton - handles the transport buttons
+
+Also included - LaunchKeyMapper - a class for controlling Novation LaunchControlXL controller. Uses the same subclasses.
+
+Was tested on Mac osx running SC3.7
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new object to handle the LaunchControlXL
+
+code::
+l = LaunchControlXL.new; //Easy setup. Should be enough.
+::
+
+ARGUMENT:: defaultChannel
+Midi channel in which the LaunchControlXL sends data. Default is 8 which is the first factory preset.
+
+ARGUMENT:: numScenes
+An option to create several virtual scenes that you can switch between.
+
+ARGUMENT:: numPads
+Number of backlit pads. Should be 16.
+
+ARGUMENT:: scInPort
+The Launchkey transmits on two ports. One for keys and knobs and one for LED controlled drumpads. If nil detects automatically
+
+ARGUMENT:: scOutPort
+Port for output messages to the Launchkey, if nil detects automatically
+
+INSTANCEMETHODS::
+
+METHOD:: pads
+An array of 18 LKDrumpad instances.
+code::
+l.pads[0].set({"down".postln}, {"up".postln}, \momentary);
+l.pads[1].set({"down".postln}, {"up".postln}, \toggle);
+::
+
+METHOD:: knobs
+An array of 24 LKKnob instances sorted from left to right and from up to down.
+so knob 4 from the left and 3 from the top would be knobs[3*8+4].
+code::
+l.knobs[0].set({|val|
+  ("knob value: "++val++", scaled from 0-1").postln
+});
+::
+
+METHOD:: faders
+An array of 8 LKKnob instances sorted from left to right.
+Works the same as .knobs
+
+METHOD:: transport
+An array of 4 LKButton instances (non backlit buttons) and 4 LKDrumpad instances (backlit buttons)
+sorted from top left to button right.
+code::
+l.transport[0].set({"down".postln}, {"up".postln});
+l.transport[4].set({"down".postln}, {"up".postln}, \toggle);
+::
+
+METHOD:: getScene
+Get the state of all pads in a specific scene as an Array of pad arrays.
+
+METHOD:: setScene
+Set the state of all pads in a specific scene.
+
+METHOD:: switchScene
+Stores the state of the current scene and switch to another scene. New scene can be specified as an array of pads.
+code::
+l.switchScene(1, nil!18); // Switches to an empty scene;
+l.switchScene(0); // Switches back to the scene stored at 0
+::
+
+METHOD:: reset
+In case LaunchControlXL loses connectivity and needs to be reset.
+
+METHOD:: free
+Free the class.
+
+EXAMPLES::
+
+code::
+Setup
+l = LaunchControlXL.new;
+
+Pads
+
+l.pads[0].set( //Momentary
+{"pad 0 goes down".postln},
+{"pad 0 goes up".postln},
+\momentary);
+
+l.pads[1].set( //Toggle
+{"pad 1 is on".postln},
+{"pad 1 is off".postln},
+\toggle);
+
+l.pads[2].set( //Toggle + hold.
+{"pad 2 is on".postln},
+{"pad 2 is off".postln},
+\togHold,
+holdOn: {"pad 2 is being held".postln;},
+holdOff: {"pad 2 is released".postln});
+
+When you set a pad its colors are set automatically according to its state:
+- momentary pads switches between low red and high red
+toggle pads switches between yellow and green
+- togHold pads switches between green (on) yellow (off) and red (hold)
+- you can also set it different when you set the pad by choosing colorOn, colorOff and colorHold or set it manually as following:
+
+
+l.pads[3].setColor(\redhi);
+Options are \black, \yellowlo, \yellowhi, \amber, \greenlo, \greenhi, \redlo, \redhi
+
+
+Knobs
+
+l.knobs[0].set({|val|
+("knob 0 value: "++val++", scaled from 0-1").postln
+});
+
+l.knobs[0].setTemp({|val|
+("now knob 0 is doing something else: "++val).postln;
+});
+
+l.knobs[0].unSetTemp;
+Now its back to doing what it used to do.
+
+l.knobs[0].value;
+//This is the current value of the knob.
+
+Faders
+works the same as knobs
+
+l.faders[0].set({|val|
+("fader 0 value: "++val++", scaled from 0-1").postln
+});
+l.faders[0].value; //current value of fader.
+
+Transport buttons
+
+l.transport[0].set({"down".postln}, {"up".postln});
+
+l.transport[0].setTemp({"This can also do something else".postln});
+
+l.transport[0].unSetTemp; // now back to what it used to do.
+
+Switching scenes:
+
+l.switchScene(1, nil!18); // Switches to an empty scene;
+
+l.switchScene(0); // Switches back to the scene stored at 0
+
+Switches to a new scene and fill the new scene with momentary drum pads:
+l.switchScene(1, Array.fill(18, [{1.postln}, {2.postln}, \momentary]))
+::

@@ -1,0 +1,211 @@
+TITLE:: LaunchKeyMapper
+summary:: Class for Novation Launchkey Mini MIDI controller
+categories:: MIDI
+related:: Classes/LKDrumpad, Classes/LKKeys, Classes/LKKnob, Classes/LaunchControlXL, Classes/LKButton, Classes/SustainPedal
+
+DESCRIPTION::
+
+LaunchKeyMapper - a class for easy usage of Novation LaunchKey Mini controller.
+
+Features:
+Set functions for each element of the Launchkey
+Control pad colors
+  Pad states - Momentary / Toggle / TogHold (toggle but with option to hold the pad)
+  Use pads as menues - select one of them.
+  Store different scenes and switch between scenes
+  Keys with internal sustain and latch controls
+
+Subclasses -
+  LKDrumpad - handles the LED drum pads including different behaviour states.
+  LKKnob - handles the knobs
+  LKButton - handles the transport buttons
+  LKKeys - handles keys includes the option for internal sustain and latch mode
+  SustainPedal - A class to use a sustain pedal connected through audio in. (Works with MOTU because they don't cut DC)
+
+Also included - LaunchControlXL - a class for controlling Novation LaunchControlXL controller. Uses the same subclasses.
+
+Was tested on Mac OSX and Raspbian Strech with SC3.7
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new object to handle the Launchkey mini
+
+code::
+l = LaunchKeyMapper.new; //Easy setup. Should be enough.
+::
+
+ARGUMENT:: defaultChannel
+Midi channel in which the Launchkey sends data. Its actually always 0.
+
+ARGUMENT:: sustainActive
+The Launchkey has no sustain pedal input so this option allows you to plug a sustain pedal to an input port of your sound card as long as it doesn't cut DC.
+
+ARGUMENT:: susBus
+Audio input channel for your sustain pedal.
+
+ARGUMENT:: numScenes
+An option to create several virtual scenes that you can switch between.
+
+ARGUMENT:: scInPort
+The Launchkey transmits on two ports. One for keys and knobs and one for LED controlled drumpads. If nil detects automatically
+
+ARGUMENT:: scInPortCtrl
+Port for InControl messages (LED controlled drum pads). If nil detects automatically.
+
+ARGUMENT:: scOutPort
+Port for output messages to the Launchkey, if nil detects automatically
+
+INSTANCEMETHODS::
+
+METHOD:: pads
+An array of 18 LKDrumpad instances.
+code::
+l.pads[0].set(
+{|vel|
+  ("pad 0 is down with velocity :"++vel).postln
+}, {
+  ("pad 0 is up").postln
+}, \momentary);
+::
+
+METHOD:: knobs
+An array of 8 LKKnob instances.
+code::
+l.knobs[0].set({|val|
+  ("knob value: "++val++", scaled from 0-1").postln
+});
+::
+
+METHOD:: transport
+An array of 4 LKButton instances, corresponding to buttons left, right, up, down.
+code::
+l.transport[0].set({"down".postln}, {"up".postln});
+::
+
+METHOD:: keys
+An instance of LKKeys.
+code::
+l.keys.set({|vel, note|
+  ("midi note: "++note++", velocity:"++vel++", scaled from 0-1").postln
+});
+::
+
+METHOD:: selectOne
+A convenient method to use the pads as a way to select one value. By defining an array the selection can be limited to just a few pads. nil allows selection of all 16 options.
+code::
+l.selectOne({|val| ("option "++val++" selected").postln}
+::
+
+METHOD:: getScene
+Get the state of all pads in a specific scene as an Array of pad arrays.
+
+METHOD:: setScene
+Set the state of all pads in a specific scene.
+
+METHOD:: switchScene
+Stores the state of the current scene and switch to another scene. New scene can be specified as an array of pads.
+code::
+l.switchScene(1, nil!18); // Switches to an empty scene;
+l.switchScene(0); // Switches back to the scene stored at 0
+::
+
+METHOD:: reset
+In case Launchkey loses connectivity and needs to be reset.
+
+METHOD:: panic
+Set all notes off.
+
+METHOD:: free
+Free the class.
+
+EXAMPLES::
+
+code::
+Setup
+l = LaunchKeyMapper.new;
+
+Drum pads
+
+l.pads[0].set( //Momentary
+{"pad 0 goes down".postln},
+{"pad 0 goes up".postln},
+\momentary);
+
+l.pads[1].set( //Toggle
+{"pad 1 is on".postln},
+{"pad 1 is off".postln},
+\toggle);
+
+l.pads[2].set( //Toggle + hold.
+{"pad 2 is on".postln},
+{"pad 2 is off".postln},
+\togHold,
+holdOn: {"pad 2 is being held".postln;},
+holdOff: {"pad 2 is released".postln});
+
+When you set a pad its colors are set automatically according to its state:
+- momentary pads switches between low red and high red
+toggle pads switches between yellow and green
+- togHold pads switches between green (on) yellow (off) and red (hold)
+- you can also set it different when you set the pad by choosing colorOn, colorOff and colorHold or set it manually as following:
+
+
+l.pads[3].setColor(\redhi);
+Options are \black, \yellowlo, \yellowhi, \amber, \greenlo, \greenhi, \redlo, \redhi
+
+
+Knobs
+
+l.knobs[0].set({|val|
+("knob 0 value: "++val++", scaled from 0-1").postln
+});
+
+l.knobs[0].setTemp({|val|
+("now knob 0 is doing something else: "++val).postln;
+});
+
+l.knobs[0].unSetTemp;
+Now its back to doing what it used to do.
+
+l.knobs[0].value;
+//This is the current value of the knob.
+
+Transport buttons
+
+l.transport[0].set({"down".postln}, {"up".postln});
+
+l.transport[0].setTemp({"This can also do something else".postln});
+
+l.transport[0].unSetTemp; // now back to what it used to do.
+
+Keys
+
+l.keys.set({|vel, note|
+("midi note: "++note++", velocity:"++vel++", scaled from 0-1").postln
+});
+
+l.keys.susOn; //set sustain on
+l.keys.susOff; // set sustain off
+l.keys.getKeys; // an array with all currently held/sustained keys sorted from low to high
+
+Set latch on - keys are held until new keys are played:
+
+l.keys.latch(true);
+
+Set latch off:
+
+l.keys.latch(false);
+
+l.panic; //set all notes off;
+
+Switching scenes:
+
+l.switchScene(1, nil!18); // Switches to an empty scene;
+
+l.switchScene(0); // Switches back to the scene stored at 0
+
+Switches to a new scene and fill the new scene with momentary drum pads:
+l.switchScene(1, Array.fill(18, [{1.postln}, {2.postln}, \momentary]))
+::
