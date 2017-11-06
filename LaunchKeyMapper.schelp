@@ -208,4 +208,8 @@ l.switchScene(0); // Switches back to the scene stored at 0
 
 Switches to a new scene and fill the new scene with momentary drum pads:
 l.switchScene(1, Array.fill(18, [{1.postln}, {2.postln}, \momentary]))
+
+Using the pads as a menu:
+l.selectOne({|val| (val ++ " selected").postln}, (0..7), currentSelected: 0);
+This will make pads 0-7 yellow and let the user select one of them. The result will be evaluated by the function in the first argument.
 ::
