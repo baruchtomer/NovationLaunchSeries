@@ -93,10 +93,27 @@ l.keys.set({|vel, note|
 ::
 
 METHOD:: selectOne
-A convenient method to use the pads as a way to select one value. By defining an array the selection can be limited to just a few pads. nil allows selection of all 16 options.
+A convenient method to use the pads as a way to select one value. By defining a padsID array the selection can be limited to just a few pads. nil allows selection of all 16 pads.
 code::
-l.selectOne({|val| ("option "++val++" selected").postln}
+l.selectOne({|val| ("option "++val++" selected out of 16 options").postln}
 ::
+More Options:
+code::
+l.selectOne({|val| (val ++ " selected out of 4 options").postln}, [0,1,8,9], currentSelected: 1);
+::
+This will make pads 0,1,8,9 yellow and let the user select one of them. Can be useful if you want to select just one out of 4.
+
+argument:: func
+Function to be evaluated with the result of the selction
+
+argument:: padsID
+An array of pad indexes which will be optional for selction
+
+argument:: funcOff
+if funcOff is not nil, deselecting the current selected pad will trigger funcOff. If funcOff is nil one pad will always be selected.
+
+argument:: currentSelected
+ If currentSelected is nil all pads will be yellow (unselected) at initiation.
 
 METHOD:: getScene
 Get the state of all pads in a specific scene as an Array of pad arrays.
@@ -107,9 +124,14 @@ Set the state of all pads in a specific scene.
 METHOD:: switchScene
 Stores the state of the current scene and switch to another scene. New scene can be specified as an array of pads.
 code::
-l.switchScene(1, nil!18); // Switches to an empty scene;
-l.switchScene(0); // Switches back to the scene stored at 0
+l.switchScene(1); // stores scene 0 and switches to scene 1
+l.switchScene(0); // switches back to the scene stored at 0
+l.switchScene(2, nil!18); // Switches to an empty scene;
+l.switchScene(3, Array.fill(18, {|i|
+  [{("pad "++i++" is pressed").postln}, {("pad "++i++" is released").postln}, \momentary]
+})); ; // switches to scene 3 and fills it with momentary pads.
 ::
+The number of available scenes is defined when you instantiate LaunchKeyMapper.
 
 METHOD:: reset
 In case Launchkey loses connectivity and needs to be reset.
@@ -129,18 +151,18 @@ l = LaunchKeyMapper.new;
 Drum pads
 
 l.pads[0].set( //Momentary
-{"pad 0 goes down".postln},
-{"pad 0 goes up".postln},
+  {|vel| ("pad 0 pressed. velocity:"++vel).postln},
+  {"pad 0 goes up".postln},
 \momentary);
 
 l.pads[1].set( //Toggle
-{"pad 1 is on".postln},
-{"pad 1 is off".postln},
+  {|vel| ("pad 1 is on, velocity:"++vel).postln},
+  {"pad 1 is off".postln},
 \toggle);
 
 l.pads[2].set( //Toggle + hold.
-{"pad 2 is on".postln},
-{"pad 2 is off".postln},
+  {"pad 2 is on".postln},
+  {"pad 2 is off".postln},
 \togHold,
 holdOn: {"pad 2 is being held".postln;},
 holdOff: {"pad 2 is released".postln});
@@ -154,6 +176,10 @@ toggle pads switches between yellow and green
 
 l.pads[3].setColor(\redhi);
 Options are \black, \yellowlo, \yellowhi, \amber, \greenlo, \greenhi, \redlo, \redhi
+
+Using the pads as a menu:
+l.selectOne({|val| (val ++ " selected").postln}, (0..7), funcOff:nil, currentSelected: 0);
+This will make pads 0-7 yellow and let the user select one of them. The result will be evaluated by the function in the first argument.
 
 
 Knobs
@@ -209,7 +235,4 @@ l.switchScene(0); // Switches back to the scene stored at 0
 Switches to a new scene and fill the new scene with momentary drum pads:
 l.switchScene(1, Array.fill(18, [{1.postln}, {2.postln}, \momentary]))
 
-Using the pads as a menu:
-l.selectOne({|val| (val ++ " selected").postln}, (0..7), currentSelected: 0);
-This will make pads 0-7 yellow and let the user select one of them. The result will be evaluated by the function in the first argument.
 ::
