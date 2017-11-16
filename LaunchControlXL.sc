@@ -23,7 +23,7 @@
 
 LaunchControlXL {
 	var <defaultChannel, <numScenes, <numPads, <scInPort, <scOutPort;
-	var  <knobs,  <pads, <keys, <faders, <sliders, <global, <transport, <>scenes, <>currentScene=0;
+	var  <knobs,  <pads, <keys, <faders, <sliders, <global, <transport, <>scenes, <>currentScene=0, <midiOut, <midiName;
 
 	*new { arg defaultChannel = 8, numScenes=2, numPads = 16, scInPort=nil, scOutPort=nil;
 		^super
@@ -33,10 +33,16 @@ LaunchControlXL {
 
 	init {
 		//Connect to MIDI sources if noone has bothered to do it yet.
-		if(MIDIClient.sources.isNil, {MIDIIn.connectAll});
+//		if(MIDIClient.sources.isNil, {MIDIIn.connectAll});
 		//Find nanoKONTROL in and out ports
-		if(scInPort.isNil, {scInPort = this.detectInPort});
-		if(scOutPort.isNil, {scOutPort = this.detectOutPort});
+//		if(scInPort.isNil, {scInPort = this.detectInPort});
+//		if(scOutPort.isNil, {scOutPort = this.detectOutPort});
+		Platform.case(
+			\osx, {midiName = "Launch Control XL"},
+			\linux, {"Who knows what happens with windows...".postln},
+			\windows, {"Who knows what happens with windows...".postln} //untested
+		);
+		this.setMidi;
 
 		knobs = Array.newClear(24);
 		faders = Array.newClear(8);
@@ -49,6 +55,23 @@ LaunchControlXL {
 
 	}
 
+	setMidi {
+		MIDIIn.connectAll;
+		//Find nanoKONTROL in and out ports
+		if(scInPort.isNil, {scInPort = this.detectInPort});
+		if(scOutPort.isNil, {scOutPort = this.detectOutPort.postln});
+		Platform.case(
+			\osx, {midiOut=MIDIOut.new(scOutPort);},
+			\linux, {midiOut = MIDIOut(0); 	midiOut.connect(scOutPort);}
+		);
+		if (midiOut.notNil) {
+			midiOut.latency=0.02; //I don't remember why this is important
+//			midiOut.noteOn(0,12,127);
+//			midiOut.control(8,0,40);
+		}  //set InControl active
+	}
+
+
 	postInfo {
 		''.postln;
 		('LaunchControl XL: In - ' ++ scInPort).postln;
@@ -59,10 +82,11 @@ LaunchControlXL {
 	}
 
 	detectInPort{^(MIDIClient.sources.detect({arg item;
-		item.name.find("Launch Control XL").notNil}) !? _.uid ? 0);}
+		item.name.find(midiName).notNil}) !? _.uid ? 0);}
 
 	detectOutPort{^MIDIClient.destinations.find(
-		[MIDIClient.destinations.detect({arg item;	item.name.find("Launch Control XL").notNil})?MIDIClient.destinations.detect({arg item;	item.name.find("IAC Bus 1").notNil})]
+		[MIDIClient.destinations.detect({arg item;	item.name.find(midiName).notNil})?
+			MIDIClient.destinations.detect({arg item;	item.name.find("IAC Bus 1").notNil})]
 	)}
 
 
@@ -83,13 +107,13 @@ LaunchControlXL {
 	createPad { arg index, cc, channel;
 		var name = \lcpad ++ '_' ++ index;
 		if(channel.isNil, {channel = defaultChannel});
-		pads = pads.put(index, LKDrumpad(cc, name, channel, scInPort, scOutPort, index));
+		pads = pads.put(index, LKDrumpad(cc, name, channel, scInPort, midiOut, index));
 	}
 
 	createTransportPad { arg index, cc, channel;
 		var name = \lctranspad ++ '_' ++ index;
 		if(channel.isNil, {channel = defaultChannel});
-		transport = transport.put(index, LKDrumpad(cc, name, channel, scInPort, scOutPort, index,
+		transport = transport.put(index, LKDrumpad(cc, name, channel, scInPort, midiOut, index,
 			Dictionary[\momentary -> [\yellowhi, \black], \toggle -> [\yellowlo, \black], \togHold -> [\yellowlo, \black, \yellowhi]]
 		));
 	}

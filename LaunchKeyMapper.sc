@@ -81,13 +81,16 @@ LaunchKeyMapper { // Should work on linux and osx.
 			\osx, {midiOut=MIDIOut.new(scOutPort);},
 			\linux, {midiOut = MIDIOut(0); 	midiOut.connect(scOutPort);}
 		);
+		this.setInControl;
+	}
+
+	setInControl {
 		if (midiOut.notNil) {
 			midiOut.latency=0.02; //I don't remember why this is important
 			midiOut.noteOn(0,12,127);
 			midiOut.control(8,0,40);
 		}  //set InControl active
 	}
-
 	createKnob { arg index, cc, channel;
 		var name = \knob ++ '_' ++ index;
 		if(channel.isNil, {channel = defaultChannel});
@@ -222,10 +225,18 @@ LaunchKeyMapper { // Should work on linux and osx.
 	reset {
 		//This is in case LK loses connectivity and needs a reset.
 		//Works only if scene had been switched once, or stored with .getScene
-		this.freeContent;
-		this.setMidi;
-		this.setup;
-		this.resetScene;
+		Platform.case(
+			\osx, {
+				this.setInControl;
+				this.resetScene;
+			},
+			\linux, {
+				this.freeContent;
+				this.setMidi;
+				this.setup;
+				this.resetScene;
+			}
+		);
 	}
 
 	panic {
