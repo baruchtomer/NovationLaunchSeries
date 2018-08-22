@@ -2,9 +2,9 @@ LKKeys {
 	var <name, <channel, <sustainActive, <susBus, <scInPort, <ctrl;
 	var <defOn, <defOff, <defSus, <>funcOn, <>funcOff, <>susPedal, <>sustain=false, <>heldKeys, <>susKeys, <>susFunc, <>mono=false, <>lastNote;
 	var latch = false, latchFlag=false;
-	*new { arg  name = \keys, channel,sustainActive=false,susBus, scInPort;
+	*new { arg  name = \keys, channel, sustainActive=false, susBus, scInPort;
 		^super
-		.newCopyArgs(name, channel,sustainActive, susBus, scInPort)
+		.newCopyArgs(name, channel, sustainActive, susBus, scInPort)
 		.init()
 	}
 

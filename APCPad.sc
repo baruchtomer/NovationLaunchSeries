@@ -1,4 +1,4 @@
-LKDrumpad {
+APCPad {
 	var <cc, <name, <channel, <scInPort, <midiOut, <index, defaults_;
 	var <defOn, <defOff, <>funcOn, <>funcOff, <>funcHoldOn, <>funcHoldOff, <>type=\none, <>state=\off, colors,  <defaults;
 	var <>colorOn=\black, <>colorOff=\black, <>colorHold=\black, <>holdSeconds=0, minHold=0.5;
@@ -15,8 +15,8 @@ LKDrumpad {
 //		scOutPort.postln;
 		funcOn = {};
 		funcOff = {};
-		colors=(redlo:13, redhi:15, greenlo:28, greenhi:60, yellowlo:29, yellowhi:62, amber: 63, black:12);
-		defaults = defaults_?(momentary: [\redhi, \redlo], toggle: [\greenhi, \amber], togHold: [\greenhi, \amber, \redhi], external: [\redhi, \black]);
+		colors=(black: 0, greenhi: 1, greenblink: 2, redhi:3, redblink:4, yellowhi:5, yellowblink:6 );
+		defaults = defaults_?(momentary: [\redhi, \black], toggle: [\greenhi, \yellowhi], togHold: [\greenhi, \yellowhi, \redhi], external: [\redhi, \black]);
 		/*		} {
 		if (MIDIOut.findPort("Launchkey Mini", "LK Mini InControl").notNil) {
 		midiOut=MIDIOut.newByName("Launchkey Mini", "LK Mini InControl");
@@ -121,6 +121,7 @@ LKDrumpad {
 		colorOn=colorOn_?\black;
 		colorOff=colorOff_?\black;
 		type=\none;
+		this.setColorByState;
 	}
 
 	setExternal {arg colorOn_, colorOff_;
